@@ -66,7 +66,7 @@ advancement_msg(){
 }
 
 death_msg(){
-    local send="no" regex last_word="_"
+    local regex last_word="_"
     for i in $@; do
         case "$last_word" in
             _)
