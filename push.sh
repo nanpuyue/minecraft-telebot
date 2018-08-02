@@ -66,17 +66,18 @@ advancement_msg(){
 }
 
 death_msg(){
-    local regex last_word="_"
+    local regex escape_string last_word="_"
     for i in $@; do
+        escape_string=$(shell_escape $i)
         case "$last_word" in
             _)
                 regex+="%1\\\$s"
                 ;;
             as|by|escape|fighting|hurt|of|to|using|whith)
-                regex+="\ ($i|%[1-3]\\\$s)"
+                regex+="\ ($escape_string|%[1-3]\\\$s)"
                 ;;
             *)
-                regex+="\ $i"
+                regex+="\ $escape_string"
                 ;;
         esac
         last_word="$i"

@@ -2,6 +2,11 @@
 # license: GPLv3 https://www.gnu.org/licenses/gpl-3.0.txt
 # author: nanpuyue <nanpuyue@gmail.com> https://blog.nanpuyue.com
 
+# 转义
+shell_escape(){
+    printf "%q" "$*"
+}
+
 # 输出 http 状态码及文本
 cat_text(){
 	echo "Status: $1"
