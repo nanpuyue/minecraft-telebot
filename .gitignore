@@ -1,0 +1,5 @@
+nginx/run
+nginx/log
+nginx/cert/server*
+nginx/nginx.conf
+include/config.sh

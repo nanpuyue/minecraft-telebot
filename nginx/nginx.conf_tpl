@@ -1,0 +1,44 @@
+# file: nginx.conf_tpl
+# license: GPLv3 https://www.gnu.org/licenses/gpl-3.0.txt
+# author: nanpuyue <nanpuyue@gmail.com> https://blog.nanpuyue.com
+
+# debian: www-data
+# archlinux: http
+user http;
+pid run/nginx.pid;
+
+events {
+	worker_connections 16;
+}
+
+http {
+	keepalive_timeout 65;
+	access_log log/access.log;
+	error_log log/error.log;
+	gzip on;
+	
+	server {
+		listen __SERVER_PORT__ ssl default_server;
+		listen [::]:__SERVER_PORT__ ssl default_server;
+		ssl_certificate      cert/server.crt;
+		ssl_certificate_key  cert/server.key;
+		ssl_session_timeout  5m;
+
+		autoindex off;
+		server_name __SERVER_NAME__;
+
+		location / {
+			return 404;
+		}
+
+		location /api/ {
+			# debian: /run/fcgiwrap.socket
+			# archlinux: /run/fcgiwrap.sock
+			fastcgi_pass   unix:/run/fcgiwrap.sock;
+
+			include        fastcgi_params;
+			fastcgi_param  SCRIPT_NAME         "api.sh";
+			fastcgi_param  DOCUMENT_ROOT       "__DOCUMENT_ROOT__";
+		}
+	}
+}

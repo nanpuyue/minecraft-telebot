@@ -1,0 +1,3 @@
+filename:
+	server.crt
+	server.key

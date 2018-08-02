@@ -1,0 +1,24 @@
+# file: config.sh
+# license: GPLv3 https://www.gnu.org/licenses/gpl-3.0.txt
+# author: nanpuyue <nanpuyue@gmail.com> https://blog.nanpuyue.com
+
+# 公共设置
+TELE_GROUPS="-123456789 -223456789"
+UPDATE_TOKEN="DIN8uRQAmkTwRKnBcSNGPHg4spJTiYYZ"
+
+# 仅提供调用脚本需要的设置
+case "$0" in
+    *nginx.sh)
+        SERVER_NAME="telebot.xxx.com" #可选
+        SERVER_PORT="8443" #可选
+        ;;
+    *api.sh)
+        TMUX_SOCKET="/tmp/mincraft-tmux.sock" #可选
+        TMUX_SESSION="minecraft"
+        ;;
+    *push.sh)
+        CURL_PROXY="http://127.0.0.1:1080" #可选
+        TELE_API="https://api.telegram.org/bot"
+        TELE_TOKEN="123456789:DTeZSDAmomER1MYv6LuhoWGEVCGoTPcRc4r"
+        ;;
+esac
