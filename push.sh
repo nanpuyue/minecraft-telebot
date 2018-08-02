@@ -71,17 +71,15 @@ death_msg(){
         case "$last_word" in
             _)
                 regex+="%1\\\$s"
-                last_word="$i"
                 ;;
             as|by|escape|fighting|hurt|of|to|using|whith)
                 regex+="\ ($i|%[1-3]\\\$s)"
-                last_word="$i"
                 ;;
             *)
                 regex+="\ $i"
-                last_word="$i"
                 ;;
         esac
+        last_word="$i"
     done
 
     for msg in "${DEATH_MSG[@]}";do
