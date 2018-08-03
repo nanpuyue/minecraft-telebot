@@ -90,36 +90,35 @@ advancement_msg(){
 
 # 死亡信息
 death_msg(){
-    local regex capture escape msg last="_"
+    local regex escape msg capture=0
 
     # 构造正则表达式
-    for i in $@; do
+    for i in ${@#* }; do
         escape=$(shell_escape $i)
-        case "$last" in
-            _)
-                regex+="%1\\\$s"
-                ;;
+        case "$i" in
             as|by|escape|fighting|hurt|of|to|using|whith)
-                if [ "$capture" = 1 ]; then
-                    regex+="\ $escape|%[1-3]\\\$s)"
-                    capture=0
+                if (( "$capture" > 0 )); then
+                    regex+="|%[1-3]\\\$s)\ $escape"
                 else
-                    regex+="\ ($escape"
-                    capture=1
+                    regex+="\ $escape"
                 fi
+                capture=1
                 ;;
             *)
-
-                regex+="\ $escape"
+                if (( "$capture" == 1 )); then
+                    regex+="\ ($escape"
+                    let capture++
+                else
+                    regex+="${regex:+\\ }$escape"
+                fi
                 ;;
         esac
-        last="$i"
     done
-    [ "$capture" = 1 ] && regex+="|%[1-3]\\\$s)"
+    (( "$capture" > 0 )) && regex+="|%[1-3]\\\$s)"
 
     # 进行正则匹配，判断信息是否位死亡信息
     for i in "${!DEATH_MSG[@]}";do
-        if [[ "${DEATH_MSG[$i]}" =~ $regex$ ]]; then
+        if [[ "${DEATH_MSG[$i]#* }" =~ $regex$ ]]; then
             # 尝试对信息进行本地化翻译
             regex=$(shell_escape ${DEATH_MSG[$i]})
             regex=${regex//\%[1-3]\\\$s/(.*)}
