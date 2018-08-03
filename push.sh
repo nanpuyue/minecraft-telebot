@@ -10,7 +10,7 @@ INCLUDE_DIR="${_DIR}include"
 . "$INCLUDE_DIR/function.sh"
 
 declare -A PLAYER_MSG=(
-    ['left']='离开了游戏'
+    ['left']='退出了游戏'
     ['joined']='加入了游戏'
 )
 
@@ -80,7 +80,7 @@ advancement_msg(){
         [ -n "${ADVAN_MSG_MAP["$advancement"]}" ] &&\
             advancement="${ADVAN_MSG_MAP["$advancement"]}"
         for i in $TELE_GROUPS; do
-            _=$(telegram_msg "$i" "$username 达成成就: $advancement")
+            _=$(telegram_msg "$i" "$username 取得了进度: $advancement")
         done
         true
 	else
