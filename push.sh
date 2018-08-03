@@ -14,18 +14,37 @@ declare -A PLAYER_MSG=(
     ['joined']='加入了游戏'
 )
 
-declare -A DEATH_MSG
+
+declare -A ADVAN_MSG DEATH_MSG
 while read -r line; do
-    if [[ "${line%,}" =~ \"(death\..*)\":\ \"?(.*)(\"|$) ]]; then
+    if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
+        ADVAN_MSG["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    elif [[ "${line%,}" =~ \"(death\..*)\":\ \"?(.*)(\"|$) ]]; then
         DEATH_MSG["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     fi
 done < "$DATA_DIR/en_us.json"
+
+declare -A ADVAN_MSG_LOCAL DEATH_MSG_LOCAL
+while read -r line; do
+    if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
+        ADVAN_MSG_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    elif [[ "${line%,}" =~ \"(death\..*)\":\ \"?(.*)(\"|$) ]]; then
+        DEATH_MSG_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    fi
+done < "$DATA_DIR/zh_cn.json"
+
+declare -A ADVAN_MSG_MAP
+for i in "${!ADVAN_MSG[@]}"; do
+    ADVAN_MSG_MAP["${ADVAN_MSG[$i]}"]="${ADVAN_MSG_LOCAL[$i]}"
+done
+unset ADVAN_MSG ADVAN_MSG_LOCAL
 
 # TODO
 ignore_msg(){
     false
 }
 
+# 聊天信息
 chat_msg(){
 	if [[ "$*" =~ \<(.*)\>\ (.*)$ ]]; then
         local username="${BASH_REMATCH[1]}"
@@ -39,6 +58,7 @@ chat_msg(){
     fi
 }
 
+# 玩家加入游戏及离开游戏
 player_msg(){
     if [[ "$*" =~ ([a-zA-Z0-9_]{3,16})\ (left|joined)\ the\ game$ ]]; then
         local username="${BASH_REMATCH[1]}"
@@ -52,12 +72,15 @@ player_msg(){
     fi
 }
 
+# 成就信息
 advancement_msg(){
-    if [[ "$*" =~ ([a-zA-Z0-9_]{3,16})\ has\ made\ the\ advancement\ (\[.*\])$ ]]; then
+    if [[ "$*" =~ ([a-zA-Z0-9_]{3,16})\ has\ made\ the\ advancement\ \[(.*)\]$ ]]; then
         local username="${BASH_REMATCH[1]}"
-        local text="${BASH_REMATCH[2]}"
+        local advancement="${BASH_REMATCH[2]}"
+        [ -n "${ADVAN_MSG_MAP["$advancement"]}" ] &&\
+            advancement="${ADVAN_MSG_MAP["$advancement"]}"
         for i in $TELE_GROUPS; do
-            _=$(telegram_msg "$i" "$username 达成成就: $text")
+            _=$(telegram_msg "$i" "$username 达成成就: $advancement")
         done
         true
 	else
@@ -65,28 +88,53 @@ advancement_msg(){
     fi        
 }
 
+# 死亡信息
 death_msg(){
-    local regex escape_string last_word="_"
+    local regex capture escape msg last="_"
+
+    # 构造正则表达式
     for i in $@; do
-        escape_string=$(shell_escape $i)
-        case "$last_word" in
+        escape=$(shell_escape $i)
+        case "$last" in
             _)
                 regex+="%1\\\$s"
                 ;;
             as|by|escape|fighting|hurt|of|to|using|whith)
-                regex+="\ ($escape_string|%[1-3]\\\$s)"
+                if [ "$capture" = 1 ]; then
+                    regex+="\ $escape|%[1-3]\\\$s)"
+                    capture=0
+                else
+                    regex+="\ ($escape"
+                    capture=1
+                fi
                 ;;
             *)
-                regex+="\ $escape_string"
+
+                regex+="\ $escape"
                 ;;
         esac
-        last_word="$i"
+        last="$i"
     done
+    [ "$capture" = 1 ] && regex+="|%[1-3]\\\$s)"
 
-    for msg in "${DEATH_MSG[@]}";do
-        if [[ "$msg" =~ $regex$ ]]; then
-            for i in $TELE_GROUPS; do
-                _=$(telegram_msg "$i" "$@")
+    # 进行正则匹配，判断信息是否位死亡信息
+    for i in "${!DEATH_MSG[@]}";do
+        if [[ "${DEATH_MSG[$i]}" =~ $regex$ ]]; then
+            # 尝试对信息进行本地化翻译
+            regex=$(shell_escape ${DEATH_MSG[$i]})
+            regex=${regex//\%[1-3]\\\$s/(.*)}
+            if [[ "$*" =~ $regex$ ]]; then
+                msg="${DEATH_MSG_LOCAL[$i]}"
+                for j in {1..3}; do
+                    [ -n "${BASH_REMATCH[$j]}" ] &&\
+                        msg=${msg/\%$j\$s/${BASH_REMATCH[$j]}}
+                done
+            else
+                msg="$*"
+            fi
+
+            for j in $TELE_GROUPS; do
+                _=$(telegram_msg "$j" "$msg")
             done
             break
         fi
