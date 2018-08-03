@@ -14,21 +14,25 @@ declare -A PLAYER_MSG=(
     ['joined']='加入了游戏'
 )
 
-declare -A ADVAN_MSG DEATH_MSG
+declare -A ADVAN_MSG DEATH_MSG ENTITY
 while read -r line; do
     if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
         ADVAN_MSG["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     elif [[ "${line%,}" =~ \"(death\..*)\":\ \"?(.*)(\"|$) ]]; then
         DEATH_MSG["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    elif [[ "${line%,}" =~ \"(entity\..*)\":\ \"?(.*)(\"|$) ]]; then
+        ENTITY["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     fi
 done < "$DATA_DIR/en_us.json"
 
-declare -A ADVAN_MSG_LOCAL DEATH_MSG_LOCAL
+declare -A ADVAN_MSG_LOCAL DEATH_MSG_LOCAL ENTITY_LOCAL
 while read -r line; do
     if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
         ADVAN_MSG_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     elif [[ "${line%,}" =~ \"(death\..*)\":\ \"?(.*)(\"|$) ]]; then
         DEATH_MSG_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    elif [[ "${line%,}" =~ \"(entity\..*)\":\ \"?(.*)(\"|$) ]]; then
+        ENTITY_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     fi
 done < "$DATA_DIR/zh_cn.json"
 
@@ -37,6 +41,12 @@ for i in "${!ADVAN_MSG[@]}"; do
     ADVAN_MSG_MAP["${ADVAN_MSG[$i]}"]="${ADVAN_MSG_LOCAL[$i]}"
 done
 unset ADVAN_MSG ADVAN_MSG_LOCAL
+
+declare -A ENTITY_MAP
+for i in "${!ENTITY[@]}"; do
+    ENTITY_MAP["${ENTITY[$i]}"]="${ENTITY_LOCAL[$i]}"
+done
+unset ENTITY ENTITY_LOCAL
 
 # TODO
 ignore_msg(){
@@ -89,7 +99,7 @@ advancement_msg(){
 
 # 死亡信息
 death_msg(){
-    local regex escape msg capture=0
+    local regex escape msg username entity capture=0
 
     # 构造正则表达式
     for i in ${@#* }; do
@@ -122,10 +132,16 @@ death_msg(){
             regex=$(shell_escape ${DEATH_MSG[$i]})
             regex=${regex//\%[1-3]\\\$s/(.*)}
             if [[ "$*" =~ $regex$ ]]; then
-                msg="${DEATH_MSG_LOCAL[$i]}"
-                for j in {1..3}; do
-                    [ -n "${BASH_REMATCH[$j]}" ] &&\
-                        msg=${msg/\%$j\$s/${BASH_REMATCH[$j]}}
+                username="${BASH_REMATCH[1]}"
+                msg="${DEATH_MSG_LOCAL[$i]/\%1\$s/$username}"
+                for j in {2..3}; do
+                    entity="${BASH_REMATCH[$j]}"
+                    if [ -n "$entity" ]; then
+                        if [ -n "${ENTITY_MAP["$entity"]}" ]; then
+                            entity="${ENTITY_MAP["$entity"]}"
+                        fi
+                        msg=${msg/\%$j\$s/$entity}
+                    fi
                 done
             else
                 msg="$*"
