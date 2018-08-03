@@ -14,7 +14,6 @@ declare -A PLAYER_MSG=(
     ['joined']='加入了游戏'
 )
 
-
 declare -A ADVAN_MSG DEATH_MSG
 while read -r line; do
     if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
@@ -116,7 +115,7 @@ death_msg(){
     done
     (( "$capture" > 0 )) && regex+="|%[1-3]\\\$s)"
 
-    # 进行正则匹配，判断信息是否位死亡信息
+    # 进行正则匹配，判断信息是否为死亡信息
     for i in "${!DEATH_MSG[@]}";do
         if [[ "${DEATH_MSG[$i]#* }" =~ $regex$ ]]; then
             # 尝试对信息进行本地化翻译
