@@ -99,7 +99,7 @@ advancement_msg(){
 
 # 死亡信息
 death_msg(){
-    local regex escape msg username entity capture=0
+    local regex escape msg username entity rematch num capture=0
 
     # 构造正则表达式
     for i in ${@#* }; do
@@ -126,29 +126,33 @@ death_msg(){
     (( "$capture" > 0 )) && regex+="|%[1-3]\\\$s)"
 
     # 进行正则匹配，判断信息是否为死亡信息
-    for i in "${!DEATH_MSG[@]}";do
-        if [[ "${DEATH_MSG[$i]#* }" =~ $regex$ ]]; then
+    for index in "${!DEATH_MSG[@]}";do
+        if [[ "${DEATH_MSG[$index]#* }" =~ $regex$ ]]; then
             # 尝试对信息进行本地化翻译
-            regex=$(shell_escape ${DEATH_MSG[$i]})
+            regex=$(shell_escape ${DEATH_MSG[$index]})
             regex=${regex//\%[1-3]\\\$s/(.*)}
             if [[ "$*" =~ $regex$ ]]; then
                 username="${BASH_REMATCH[1]}"
-                msg="${DEATH_MSG_LOCAL[$i]/\%1\$s/$username}"
-                for j in {2..3}; do
-                    entity="${BASH_REMATCH[$j]}"
+                rematch=("${BASH_REMATCH[@]}")
+                msg="${DEATH_MSG_LOCAL[$index]/\%1\$s/$username}"
+                # 只进行必要的翻译尝试
+                [[ ! "$index" =~ \.player ]] && num+="${num:+ }2"
+                [[ "$index" =~ \.item$ ]] && num+="${num:+ }3"
+                for i in $num; do
+                    entity="${rematch[$i]}"
                     if [ -n "$entity" ]; then
                         if [ -n "${ENTITY_MAP["$entity"]}" ]; then
                             entity="${ENTITY_MAP["$entity"]}"
                         fi
-                        msg=${msg/\%$j\$s/$entity}
+                        msg=${msg/\%$i\$s/$entity}
                     fi
                 done
             else
                 msg="$*"
             fi
 
-            for j in $TELE_GROUPS; do
-                _=$(telegram_msg "$j" "$msg")
+            for i in $TELE_GROUPS; do
+                _=$(telegram_msg "$i" "$msg")
             done
             return 0
         fi
