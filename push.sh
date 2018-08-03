@@ -52,9 +52,9 @@ chat_msg(){
         for i in $TELE_GROUPS; do
             _=$(telegram_msg "$i" "<$username> $text")
         done
-        true
+        return 0
 	else
-        false
+        return -1
     fi
 }
 
@@ -66,9 +66,9 @@ player_msg(){
         for i in $TELE_GROUPS; do
             _=$(telegram_msg "$i" "$username ${PLAYER_MSG[$action]}")
         done
-        true
+        return 0
 	else
-        false
+        return -1
     fi
 }
 
@@ -82,9 +82,9 @@ advancement_msg(){
         for i in $TELE_GROUPS; do
             _=$(telegram_msg "$i" "$username 取得了进度: $advancement")
         done
-        true
+        return 0
 	else
-        false
+        return -1
     fi        
 }
 
@@ -136,9 +136,10 @@ death_msg(){
             for j in $TELE_GROUPS; do
                 _=$(telegram_msg "$j" "$msg")
             done
-            break
+            return 0
         fi
     done
+    return -1
 }
 
 while read -r line; do
