@@ -14,7 +14,7 @@ declare -A PLAYER_MSG=(
     ['joined']='加入了游戏'
 )
 
-declare -A ADVAN_MSG DEATH_MSG ENTITY
+declare -A ADVAN_MSG ADVAN_TYPE DEATH_MSG ENTITY
 while read -r line; do
     if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
         ADVAN_MSG["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
@@ -22,10 +22,12 @@ while read -r line; do
         DEATH_MSG["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     elif [[ "${line%,}" =~ \"(entity\..*)\":\ \"?(.*)(\"|$) ]]; then
         ENTITY["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    elif [[ "${line%,}" =~ \"(chat\.type\.advancement\..*)\":\ \"?%s\ (.*)\ %s(\"|$) ]]; then
+        ADVAN_TYPE["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     fi
 done < "$DATA_DIR/en_us.json"
 
-declare -A ADVAN_MSG_LOCAL DEATH_MSG_LOCAL ENTITY_LOCAL
+declare -A ADVAN_MSG_LOCAL ADVAN_TYPE_LOCAL DEATH_MSG_LOCAL ENTITY_LOCAL
 while read -r line; do
     if [[ "${line%,}" =~ \"(advancements\..*\.title)\":\ \"?(.*)(\"|$) ]]; then
         ADVAN_MSG_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
@@ -33,6 +35,8 @@ while read -r line; do
         DEATH_MSG_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     elif [[ "${line%,}" =~ \"(entity\..*)\":\ \"?(.*)(\"|$) ]]; then
         ENTITY_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
+    elif [[ "${line%,}" =~ \"(chat\.type\.advancement\..*)\":\ \"?%s(.*)%s(\"|$) ]]; then
+        ADVAN_TYPE_LOCAL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
     fi
 done < "$DATA_DIR/zh_cn.json"
 
@@ -47,6 +51,12 @@ for i in "${!ENTITY[@]}"; do
     ENTITY_MAP["${ENTITY[$i]}"]="${ENTITY_LOCAL[$i]}"
 done
 unset ENTITY ENTITY_LOCAL
+
+declare -A ADVAN_TYPE_MAP
+for i in "${!ADVAN_TYPE[@]}"; do
+    ADVAN_TYPE_MAP["${ADVAN_TYPE[$i]}"]="${ADVAN_TYPE_LOCAL[$i]}"
+done
+unset ADVAN_TYPE ADVAN_TYPE_LOCAL
 
 # TODO
 ignore_msg(){
@@ -102,13 +112,16 @@ player_msg(){
 
 # 成就信息
 advancement_msg(){
-    if [[ "$*" =~ ([a-zA-Z0-9_]{3,16})\ has\ made\ the\ advancement\ \[(.*)\]$ ]]; then
+    if [[ "$*" =~ ([a-zA-Z0-9_]{3,16})\ (has\ .*)\ \[(.*)\]$ ]]; then
         local username="${BASH_REMATCH[1]}"
-        local advancement="${BASH_REMATCH[2]}"
+        local atype="${BASH_REMATCH[2]}"
+        local advancement="${BASH_REMATCH[3]}"
+        [ -n "${ADVAN_TYPE_MAP["$atype"]}" ] &&\
+            atype="${ADVAN_TYPE_MAP["$atype"]}"
         [ -n "${ADVAN_MSG_MAP["$advancement"]}" ] &&\
             advancement="${ADVAN_MSG_MAP["$advancement"]}"
         for i in $TELE_GROUPS; do
-            _=$(telegram_msg "$i" "$username 取得了进度: $advancement")
+            _=$(telegram_msg "$i" "$username $atype: $advancement")
         done
         return 0
 	else
