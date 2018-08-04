@@ -118,7 +118,7 @@ advancement_msg(){
 
 # 死亡信息
 death_msg(){
-    local regex escape msg username entity rematch num capture=0
+    local regex escape msg username entity rematch capture=0 num=2
 
     # 构造正则表达式
     for i in ${@#* }; do
@@ -155,7 +155,7 @@ death_msg(){
                 rematch=("${BASH_REMATCH[@]}")
                 msg="${DEATH_MSG_LOCAL[$index]/\%1\$s/$username}"
                 # 只进行必要的翻译尝试
-                [[ ! "$index" =~ \.player ]] && num+="${num:+ }2"
+                # [[ ! "$index" =~ \.player ]] && num+="${num:+ }2"
                 [[ "$index" =~ \.item$ ]] && num+="${num:+ }3"
                 for i in $num; do
                     entity="${rematch[$i]}"
