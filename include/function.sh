@@ -48,6 +48,15 @@ minecraft_msg(){
 	fi
 }
 
+# 执行任意单条 Minecraft 控制台指令
+minecraft_cmd(){
+	if [ -S "$TMUX_SOCKET" ]; then
+		tmux -S "$TMUX_SOCKET" send-key -t "$TMUX_SESSION" C-u "$*" Enter
+	else
+		tmux send-key -t "$TMUX_SESSION" C-u $_command Enter
+	fi
+}
+
 # 向 telegram 发送消息，$1: chat_id， $2: text
 telegram_msg(){
 	local url="${TELE_API}${TELE_TOKEN}/sendMessage"

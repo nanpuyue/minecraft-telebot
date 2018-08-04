@@ -4,6 +4,7 @@
 
 # 公共设置
 TELE_GROUPS="-123456789 -223456789"
+TELE_BOTNAME="xxx_bot"
 UPDATE_TOKEN="DIN8uRQAmkTwRKnBcSNGPHg4spJTiYYZ"
 
 # 仅提供调用脚本需要的设置

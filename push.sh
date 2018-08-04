@@ -67,6 +67,25 @@ chat_msg(){
     fi
 }
 
+# 玩家在线信息
+online_msg(){
+    if [[ "$*" =~ There\ are\ ([0-9]*)\ of\ a\ max\ ([0-9]*)\ players\ online:\ (.*)$ ]]; then
+        local online="${BASH_REMATCH[1]}"
+        local list="\n${BASH_REMATCH[3]//, /$'\n'}"
+        if (( "$online" > 0 )); then
+            local msg="当前共 $online 人在线: ${list/#\\n/$'\n'}"
+        else
+            local msg="当前无人在线"
+        fi
+        for i in $TELE_GROUPS; do
+                _=$(telegram_msg "$i" "$msg")
+        done
+        return 0
+    else
+        return -1
+    fi
+}
+
 # 玩家加入游戏及离开游戏
 player_msg(){
     if [[ "$*" =~ ([a-zA-Z0-9_]{3,16})\ (left|joined)\ the\ game$ ]]; then
@@ -164,6 +183,8 @@ while read -r line; do
     if [[ "$line" =~ \[.*\]\ \[Server\ thread/INFO\]:\ (.*)$ ]]; then
         server_info="${BASH_REMATCH[1]%$'\r'}"
         if chat_msg "$server_info"; then
+            continue
+        elif online_msg "$server_info"; then
             continue
         elif player_msg "$server_info"; then
             continue
