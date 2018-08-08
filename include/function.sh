@@ -53,7 +53,7 @@ minecraft_cmd(){
 	if [ -S "$TMUX_SOCKET" ]; then
 		tmux -S "$TMUX_SOCKET" send-key -t "$TMUX_SESSION" C-u "$*" Enter
 	else
-		tmux send-key -t "$TMUX_SESSION" C-u $_command Enter
+		tmux send-key -t "$TMUX_SESSION" C-u "$*" Enter
 	fi
 }
 
