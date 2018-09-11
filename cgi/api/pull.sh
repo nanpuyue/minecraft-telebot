@@ -22,7 +22,7 @@ if check_in "$chatid" "$TELE_GROUPS" && [ "$text" != null ]; then
 			/list|/list@$TELE_BOTNAME)
 				minecraft_cmd "list"
 				;;
-			/ping|/ping@@$TELE_BOTNAME)
+			/ping|/ping@$TELE_BOTNAME)
 				_=$(telegram_msg "$chatid" "pong")
 				;;
 		esac
