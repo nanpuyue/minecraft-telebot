@@ -12,5 +12,5 @@ SERVER_PORT="8443" #可选
 SERVER_NAME="telebot.xxx.com" #可选
 UPDATE_TOKEN="DIN8uRQAmkTwRKnBcSNGPHg4spJTiYYZ"
 
-TMUX_SOCKET="/tmp/mincraft-tmux.sock" #可选
+TMUX_SOCKET="/tmp/minecraft-tmux.sock" #可选
 TMUX_SESSION="minecraft"
