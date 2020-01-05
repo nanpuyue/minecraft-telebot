@@ -28,8 +28,6 @@ if check_in "$chatid" "$TELE_GROUPS" && [ "$text" != null ]; then
 		esac
 	else
 		# 聊天信息
-		while read -r line; do
-			[ -n "$line" ] && minecraft_msg "[t] <$username> $line"
-		done <<< "${text//\\n/$'\n'}"
+		minecraft_msg "[t] <$username> $text"
 	fi
 fi
